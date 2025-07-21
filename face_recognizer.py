@@ -194,6 +194,7 @@ class FaceRecognizer:
 
 # Example Usage (for testing this module directly):
 if __name__ == '__main__':
+    from test_utils import get_test_video_capture
     # This logger will use the configuration from the try-except block at the top.
     logger.info("--- Testing FaceRecognizer Module (Standalone) ---")
 
@@ -230,28 +231,9 @@ if __name__ == '__main__':
     
     logger.info(f"Using video source for face recognition test: {test_video_source_fr}")
 
-    if isinstance(test_video_source_fr, str) and not test_video_source_fr.startswith("rtsp://") and not os.path.exists(test_video_source_fr):
-        logger.error(f"Test video file not found: '{test_video_source_fr}'. Please provide a valid path or RTSP URL.")
-        exit()
-
-    cap_test_fr = None
-    original_ffmpeg_options_fr_test = os.environ.get("OPENCV_FFMPEG_CAPTURE_OPTIONS") 
-    if isinstance(test_video_source_fr, str) and test_video_source_fr.startswith("rtsp://"):
-        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
-        logger.debug("Set OPENCV_FFMPEG_CAPTURE_OPTIONS to 'rtsp_transport;tcp' for RTSP test.")
-        cap_test_fr = cv2.VideoCapture(test_video_source_fr, cv2.CAP_FFMPEG)
-    else:
-        cap_test_fr = cv2.VideoCapture(test_video_source_fr)
-    
-    if isinstance(test_video_source_fr, str) and test_video_source_fr.startswith("rtsp://"):
-        if original_ffmpeg_options_fr_test is None:
-            if "OPENCV_FFMPEG_CAPTURE_OPTIONS" in os.environ:
-                del os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"]
-        else:
-            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = original_ffmpeg_options_fr_test
-
-    if not cap_test_fr or not cap_test_fr.isOpened():
-        logger.error(f"Error opening video source for face recognition test: {test_video_source_fr}")
+    cap_test_fr = get_test_video_capture(test_video_source_fr)
+    if not cap_test_fr:
+        logger.error("Could not initialize video capture. Exiting test.")
         exit()
     
     logger.info("Starting face recognition test. Press 'q' in an OpenCV window to quit (if shown).")

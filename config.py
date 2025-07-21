@@ -1,92 +1,180 @@
-# config.py
+# config.py - Final configuration with LUKS storage and remote AI models
 import os
-import logging 
+import logging
 
-# --- WSL2 Specific Path Configuration ---
-WINDOWS_HDD_MOUNT_POINT = "/mnt/g"
+# =============================================================================
+# STORAGE SETTINGS
+# =============================================================================
+# All data will be stored in a 'data' directory inside the project folder.
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+BASE_STORAGE_DIR = os.path.join(PROJECT_ROOT, "data")
+RECORDINGS_DIR = os.path.join(BASE_STORAGE_DIR, "recordings")
+LOG_FILE_DIR = os.path.join(BASE_STORAGE_DIR, "logs")
+LOG_FILE = os.path.join(LOG_FILE_DIR, "cctv_ai_app.log")
+KNOWN_FACES_DIR = os.path.join(BASE_STORAGE_DIR, "known_faces")
+KNOWN_ENCODINGS_PATH = os.path.join(BASE_STORAGE_DIR, "known_faces_encodings.pkl")
 
-PROJECT_DATA_ON_HDD = os.path.join(WINDOWS_HDD_MOUNT_POINT, "CCTV_AI_Project_Data")
+# =============================================================================
+# REMOTE GPU SETTINGS (CRITICAL)
+# =============================================================================
+REMOTE_GPU_ENABLED = True
+REMOTE_GPU_SERVER_URL = "http://192.168.29.78:5000"  # Your local machine IP
+FALLBACK_TO_CPU = False  # Force GPU usage for better performance
+GPU_CONNECTION_TIMEOUT = 30  # Timeout for GPU requests
+GPU_RETRY_ATTEMPTS = 3  # Number of retry attempts
 
-# --- Camera Settings ---
+# =============================================================================
+# AI MODELS SETTINGS (REMOTE STORAGE)
+# =============================================================================
+# Models are stored on your local machine F:\AI_Models
+# The GPU server will access them directly from F:\AI_Models\
+REMOTE_AI_MODELS_PATH = "F:/AI_Models"  # Path on your local Windows machine
+OBJECT_DETECTION_MODEL_NAME = "yolov8s.pt"  # Model filename
+FACE_RECOGNITION_MODEL_NAME = "face_recognition_models"  # Face models directory
+
+# Local model cache (optional - for fallback)
+LOCAL_MODEL_CACHE = "/tmp/ai_models_cache"
+
+# =============================================================================
+# SECURE STORAGE SETTINGS (LUKS ENCRYPTED)
+# =============================================================================
+# Use LUKS encrypted storage for all recordings and sensitive data
+# SECURE_STORAGE_MOUNT = "/mnt/secure_data"
+# BASE_STORAGE_DIR = SECURE_STORAGE_MOUNT
+# RECORDINGS_DIR = os.path.join(BASE_STORAGE_DIR, "cctv_recordings")
+# LOG_FILE_DIR = os.path.join(BASE_STORAGE_DIR, "logs")
+# LOG_FILE = os.path.join(LOG_FILE_DIR, "cctv_ai_app.log")
+
+# Backup storage (in case LUKS is unmounted)
+# BACKUP_STORAGE_DIR = "/tmp/cctv_backup"
+# BACKUP_RECORDINGS_DIR = os.path.join(BACKUP_STORAGE_DIR, "recordings")
+# BACKUP_LOG_DIR = os.path.join(BACKUP_STORAGE_DIR, "logs")
+
+# =============================================================================
+# CAMERA SETTINGS
+# =============================================================================
 CAMERA_SOURCES = [
-    "rtsp://<credentials>:554/cam/realmonitor?channel=1&subtype=0",
-    # Add more camera sources here if needed
+    # Primary RTSP Camera
+    "rtsp://admin:admin%40123@192.168.29.56:554/cam/realmonitor?channel=1&subtype=0",
+    
+    # Backup options (uncomment if needed)
+    # 0,  # USB camera index 0
+    # "rtsp://username:password@another_camera:554/stream",
+    # "/path/to/test/video.mp4",
+    # "http://192.168.1.100:8080/video",
 ]
-FRAME_WIDTH = 1280  # Desired frame width for processing (can be None to use camera default)
-FRAME_HEIGHT = 720 # Desired frame height for processing (can be None)
-FPS_LIMIT = 10     # Limit processing FPS to save resources, None for no limit. Affects main loop.
 
-# --- Storage Settings ---
-# Recordings will be saved to your Windows G: drive via the WSL2 mount point
-RECORDINGS_DIR = os.path.join(PROJECT_DATA_ON_HDD, "recordings")
+# Camera resolution - Optimized for remote GPU processing
+FRAME_WIDTH = 1280   # Reduced for better network performance
+FRAME_HEIGHT = 720  # Reduced for better network performance
+FPS_LIMIT = 5       # Optimized for remote GPU processing
 
-# --- Face Recognition Settings ---
-KNOWN_FACES_DIR = os.path.join(PROJECT_DATA_ON_HDD, "ai_datasets", "known_faces")
-KNOWN_ENCODINGS_PATH = os.path.join(PROJECT_DATA_ON_HDD, "ai_datasets", "known_faces_encodings.pkl")
-FACE_DETECTION_MODEL = "hog" # 'hog' (faster) or 'cnn' (more accurate, needs GPU for good speed)
-FACE_RECOGNITION_TOLERANCE = 0.55 # Lower is stricter (0.0 to 1.0 for distance)
+# =============================================================================
+# PERFORMANCE SETTINGS (OPTIMIZED FOR REMOTE GPU)
+# =============================================================================
+AI_PROCESSING_FRAME_INTERVAL = 3  # Process every 3rd frame
 
-# --- Motion Detection Settings ---
-MOTION_HISTORY = 500
-MOTION_VAR_THRESHOLD = 60 # Higher values mean less sensitivity to motion
-MOTION_DETECT_SHADOWS = True # If True, tries to identify and ignore shadows
-MOTION_MIN_CONTOUR_AREA = 700 # Minimum size of a moving object to be considered significant
-MOTION_COOLDOWN_SECONDS = 5   # Cooldown before re-triggering motion for the same source
+# Image compression for network transfer
+IMAGE_QUALITY = 70  # JPEG quality (0-100, lower = faster transfer)
+RESIZE_BEFORE_GPU = True  # Resize frames before sending to GPU
+GPU_PROCESSING_SIZE = (416, 416)  # YOLOv8 optimal input size
 
-# --- Object Detection Settings ---
-# Store models within the WSL2 filesystem (e.g., in your project directory) for potentially faster loading.
-# Or place on /mnt/g/ if preferred and update path.
-# Assumes model (e.g., yolov8s.pt) is in the same directory as main_controller.py or current working directory.
-OBJECT_DETECTION_MODEL_PATH = 'mnt/f/AI_Models/yolov8s.pt' 
-OBJECT_CONFIDENCE_THRESHOLD = 0.45 # Minimum confidence to consider an object detected
-# List of specific object classes to focus on for triggering events (e.g., recording, further analysis)
-# Refer to COCO dataset names if using a pre-trained YOLO model (e.g., 'person', 'car', 'dog')
-# An empty list or None means consider all detected objects above threshold.
-FOCUSED_OBJECT_CLASSES = ['person', 'car', 'bicycle', 'motorcycle', 'dog', 'cat', 'bird']
-# Only run face recognition if one of these object classes is detected by the object detector
+# =============================================================================
+# MOTION DETECTION SETTINGS
+# =============================================================================
+MOTION_HISTORY = 300
+MOTION_VAR_THRESHOLD = 40  # More sensitive detection
+MOTION_DETECT_SHADOWS = False  # Disabled for performance
+MOTION_MIN_CONTOUR_AREA = 500
+MOTION_COOLDOWN_SECONDS = 3
+
+# =============================================================================
+# OBJECT DETECTION SETTINGS
+# =============================================================================
+OBJECT_CONFIDENCE_THRESHOLD = 0.5
+FOCUSED_OBJECT_CLASSES = [
+    'person',      # People detection
+    'car',         # Vehicles
+    'bicycle',     # Bikes
+    'motorcycle',  # Motorbikes
+    'dog',         # Pets
+    'cat',         # Pets
+    'bird'         # Animals
+]
+
+# Classes that trigger face recognition (if enabled)
 PROCESS_FACES_FOR_CLASSES = ['person']
 
-# --- Event & Recording Settings ---
-RECORD_SECONDS_BEFORE_EVENT = 5  # How many seconds of footage to include before an event trigger
-RECORD_SECONDS_AFTER_EVENT = 10  # How many seconds to record after the last detected activity for an event
-MAX_RECORDING_MINUTES = 5      # Max duration for a single event recording clip to prevent excessively long files
-EVENT_COOLDOWN_SECONDS = 30    # Cooldown for logging similar significant events to avoid spamming logs
+# =============================================================================
+# RECORDING SETTINGS
+# =============================================================================
+RECORD_SECONDS_BEFORE_EVENT = 3   # Pre-event recording
+RECORD_SECONDS_AFTER_EVENT = 7    # Post-event recording
+MAX_RECORDING_MINUTES = 3         # Maximum recording length
+EVENT_COOLDOWN_SECONDS = 15       # Cooldown between events
 
-# --- Display & Logging Settings ---
-# To show video window from WSL2, you'll need an X Server running on Windows (e.g., VcXsrv, X410)
-# and DISPLAY environment variable set in WSL2 (e.g., export DISPLAY=$(ip route|awk '/default/ {print $3}'):0.0 or export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0)
-# For a headless server setup, set SHOW_VIDEO_WINDOW = False
-SHOW_VIDEO_WINDOW = True # Set to True if you have an X Server configured and want to see output windows
-LOG_LEVEL = "INFO" # DEBUG, INFO, WARNING, ERROR, CRITICAL (standard logging levels)
-LOG_FILE_DIR = os.path.join(PROJECT_DATA_ON_HDD, "logs")
-LOG_FILE = os.path.join(LOG_FILE_DIR, "cctv_ai_app.log") # Log to HDD
+# Recording format and quality
+VIDEO_CODEC = 'mp4v'  # Video codec
+VIDEO_FPS = 15        # Recording FPS
+VIDEO_QUALITY = 80    # Video quality (0-100)
 
-# --- Performance ---
-# Process every Nth frame for heavy AI tasks (object/face detection) to save resources,
-# especially if FPS_LIMIT is high or multiple cameras are used.
-# e.g., if FPS_LIMIT is 30 and AI_PROCESSING_FRAME_INTERVAL is 3, AI effectively runs at 10 FPS on those frames.
-AI_PROCESSING_FRAME_INTERVAL = 2
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+# Encryption settings for recordings (if needed)
+ENCRYPT_RECORDINGS = False  # Enable if you want additional encryption
+ENCRYPTION_KEY_FILE = os.path.join(BASE_STORAGE_DIR, ".encryption_key")
 
-# --- Ensure base directories exist on the G: drive (via /mnt/g) ---
-# It's best to create the root PROJECT_DATA_ON_HDD (e.g., G:\CCTV_AI_Project_Data) manually in Windows first.
-# Python can then create the subdirectories.
-if not os.path.exists(PROJECT_DATA_ON_HDD):
-    print(f"WARNING: Base data directory '{PROJECT_DATA_ON_HDD}' (mapped from G: drive) not found.")
-    print(f"Please create G:\\CCTV_AI_Project_Data manually on your Windows host system.")
-    # Consider raising an error or exiting if this critical path doesn't exist.
+# Access control
+REQUIRE_AUTHENTICATION = False  # Enable for remote access control
+API_KEY_FILE = os.path.join(BASE_STORAGE_DIR, ".api_keys")
 
-# Create subdirectories if they don't exist.
-try:
-    os.makedirs(RECORDINGS_DIR, exist_ok=True)
-    os.makedirs(KNOWN_FACES_DIR, exist_ok=True) # Also creates PROJECT_DATA_ON_HDD/ai_datasets if needed
-    os.makedirs(LOG_FILE_DIR, exist_ok=True)
-    print(f"Data directories checked/created under: {PROJECT_DATA_ON_HDD}")
-except OSError as e:
-    print(f"ERROR: Could not create required data directories under '{PROJECT_DATA_ON_HDD}': {e}")
-    print("Please check permissions and ensure the base path on G: drive is accessible from WSL2.")
+# =============================================================================
+# DISPLAY & LOGGING SETTINGS
+# =============================================================================
+SHOW_VIDEO_WINDOW = False  # Keep False for headless server operation
+LOG_LEVEL = "INFO"         # Options: DEBUG, INFO, WARNING, ERROR
 
-# Basic logging configuration check (actual setup is in main_controller.py)
-# This is just to inform the user if config is loaded.
-print(f"Config loaded. Log file target: {LOG_FILE}")
-print(f"Display window for main application: {SHOW_VIDEO_WINDOW}")
+# Advanced logging
+ENABLE_PERFORMANCE_LOGGING = True  # Log performance metrics
+LOG_GPU_STATS = True              # Log GPU processing times
+LOG_FRAME_SKIP_INFO = True        # Log when frames are skipped
+LOG_STORAGE_STATS = True          # Log storage usage
 
+# =============================================================================
+# FACE RECOGNITION SETTINGS (OPTIONAL)
+# =============================================================================
+ENABLE_FACE_RECOGNITION = False   # Disabled due to installation complexity
+# KNOWN_FACES_DIR = os.path.join(BASE_STORAGE_DIR, "known_faces")
+# KNOWN_ENCODINGS_PATH = os.path.join(BASE_STORAGE_DIR, "known_faces_encodings.pkl")
+FACE_DETECTION_MODEL = "hog"      # Use 'hog' for CPU, 'cnn' for GPU
+FACE_RECOGNITION_TOLERANCE = 0.6
+
+# =============================================================================
+# NETWORK & RELIABILITY SETTINGS
+# =============================================================================
+NETWORK_TIMEOUT = 10  # Timeout for network requests
+MAX_RETRY_DELAY = 5   # Max delay between retries
+
+# Connection health monitoring
+GPU_HEALTH_CHECK_INTERVAL = 60  # Check GPU server health every 60 seconds
+AUTO_RECONNECT = True           # Auto-reconnect to GPU server if connection lost
+
+# =============================================================================
+# CONFIGURATION SUMMARY
+# =============================================================================
+print("=" * 70)
+print("SECURE CCTV AI SYSTEM CONFIGURATION")
+print("=" * 70)
+print(f"Remote GPU Server: {REMOTE_GPU_SERVER_URL}")
+print(f"AI Models Location: {REMOTE_AI_MODELS_PATH} (on local machine)")
+print(f"Storage Location: {BASE_STORAGE_DIR}")
+print(f"Recordings Directory: {RECORDINGS_DIR}")
+print(f"Camera Sources: {len(CAMERA_SOURCES)} configured")
+print(f"Frame Size: {FRAME_WIDTH}x{FRAME_HEIGHT}")
+print(f"FPS Limit: {FPS_LIMIT}")
+print(f"AI Processing: Every {AI_PROCESSING_FRAME_INTERVAL} frames")
+# print(f"LUKS Storage: {'✓ Mounted' if os.path.ismount(SECURE_STORAGE_MOUNT) else '✗ Not mounted'}")
+print(f"Face Recognition: {'Enabled' if ENABLE_FACE_RECOGNITION else 'Disabled'}")
+print(f"Video Display: {'Enabled' if SHOW_VIDEO_WINDOW else 'Disabled'}")
+print("=" * 70)
