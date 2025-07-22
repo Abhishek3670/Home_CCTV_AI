@@ -1,190 +1,171 @@
-# Home CCTV AI
+# Home CCTV AI - Phase 1 Complete ✅
 
-An intelligent CCTV surveillance system powered by AI that provides real-time object detection, motion detection, face recognition, and automatic video recording capabilities.
+An intelligent CCTV surveillance system powered by AI that provides real-time object detection, motion detection, face recognition, and automatic video recording capabilities. **Phase 1 of the integration with Luks_storage is now complete.**
 
-## 🚀 Features
+## 🎯 Project Status - Phase 1 Complete
 
-- **🎯 Real-Time Object Detection**: Uses YOLO (You Only Look Once) models to detect and classify objects like persons, vehicles, animals, and more
-- **👁️ Motion Detection**: Advanced background subtraction algorithms to detect motion with configurable sensitivity
-- **👤 Face Recognition**: Identify known individuals and distinguish them from strangers using face encodings
-- **📹 Automatic Video Recording**: Records video clips triggered by events with configurable pre-event and post-event footage
-- **📊 Multi-Camera Support**: Handle multiple camera sources simultaneously (RTSP, USB, video files)
-- **🔧 Configurable Settings**: Highly customizable through configuration files
-- **📝 Comprehensive Logging**: Detailed logging for monitoring and troubleshooting
-- **⚡ Performance Optimized**: Frame processing intervals and FPS limiting for resource management
+### ✅ Phase 1: API Server Implementation (COMPLETED)
+- **✅ FastAPI Framework**: Modern, fast Python web framework integrated
+- **✅ API Server**: `api_server.py` fully implemented and functional
+- **✅ Core Endpoints**: Status, camera management, and live streaming endpoints
+- **✅ Background Processing**: CCTV processing runs in dedicated background threads
+- **✅ Production Ready**: Code refactored and optimized for distributed systems
 
-## 🏗️ Architecture
+### 🔄 Phase 2: Rust Backend Integration (NEXT)
+- **⏳ Python Process Management**: Rust subprocess handling
+- **⏳ HTTP Client Integration**: reqwest crate implementation  
+- **⏳ Rust API Client**: Communication layer development
+- **⏳ Backend Endpoints**: Secure proxy endpoints creation
 
-The system consists of modular components:
+### 📋 Phase 3: Frontend UI Development (PLANNED)
+- **⏳ CCTV Management Page**: Web interface creation
+- **⏳ Navigation Integration**: Seamless UI integration
+- **⏳ Live Streaming**: Real-time video display
+- **⏳ Recordings Browser**: Video playback interface
 
-- **`main_controller.py`**: Main orchestrator that coordinates all modules
-- **`camera_manager.py`**: Handles camera connections and frame retrieval with reconnection logic
-- **`motion_detector.py`**: Motion detection using MOG2 background subtraction
-- **`object_detector.py`**: YOLO-based object detection with GPU/CPU support
-- **`face_recognizer.py`**: Face detection and recognition using face_recognition library
-- **`video_recorder.py`**: Threaded video recording with circular buffer for pre-event footage
-- **`config.py`**: Configuration management for all system parameters
+## 🚀 API Features (Phase 1 Complete)
 
-## 📋 Requirements
+### 🎯 Real-Time Object Detection
+- Uses YOLO (You Only Look Once) models to detect and classify objects
+- Supports persons, vehicles, animals, and more
+- GPU/CPU acceleration support
+
+### 👁️ Motion Detection  
+- Advanced background subtraction algorithms
+- Configurable sensitivity settings
+- Motion event triggering
+
+### 👤 Face Recognition
+- Identify known individuals and distinguish from strangers
+- Face encodings with configurable tolerance
+- Support for multiple face databases
+
+### 📹 Automatic Video Recording
+- Event-triggered recording with pre/post-event footage
+- Configurable recording duration and quality
+- Circular buffer for continuous recording
+
+### 📊 Multi-Camera Support
+- Handle multiple camera sources simultaneously
+- RTSP, USB, and video file support
+- Independent camera configuration
+
+### 🔧 Configurable Settings
+- Comprehensive configuration through `config.py`
+- JSON-based camera configuration
+- Runtime parameter adjustment
+
+### ⚡ Performance Optimized
+- Frame processing intervals and FPS limiting
+- Resource management and monitoring
+- Distributed processing architecture
+
+## 📋 API Endpoints (Phase 1)
+
+### Camera Management
+- `GET /cameras` - List all configured cameras
+- `GET /cameras/{camera_id}` - Get specific camera details
+- `POST /cameras` - Add new camera configuration
+- `PUT /cameras/{camera_id}` - Update camera settings
+- `DELETE /cameras/{camera_id}` - Remove camera
+
+### System Status
+- `GET /status` - Get system health and status
+- `GET /health` - Health check endpoint
+
+### Live Streaming  
+- `GET /stream/{camera_id}` - Live MJPEG stream
+- `GET /snapshot/{camera_id}` - Single frame capture
+
+### Recordings
+- `GET /recordings` - List available recordings
+- `GET /recordings/{filename}` - Download specific recording
+
+## 🛠️ Installation & Setup
 
 ### System Requirements
 - Python 3.7+
 - OpenCV with FFMPEG support (for RTSP streams)
-- CUDA-compatible GPU (optional, for faster object detection)
+- CUDA-compatible GPU (optional, for faster processing)
 
 ### Python Dependencies
-```
-opencv-python>=4.5.0
-ultralytics>=8.0.0
-face-recognition>=1.3.0
-numpy>=1.21.0
-torch>=1.9.0
-torchvision>=0.10.0
+```bash
+pip install -r requirements.txt
 ```
 
-## 🛠️ Installation
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/Abhishek3670/Home_CCTV_AI.git
-   cd Home_CCTV_AI
-   ```
-
-2. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-   
-   Or install manually:
-   ```bash
-   pip install opencv-python ultralytics face-recognition numpy torch torchvision
-   ```
-
-3. **Download YOLO Model** (if not using default)
-   - The system will automatically download `yolov8s.pt` on first run
-   - For custom models, place them in the specified path in `config.py`
-
-4. **Setup Face Recognition** (optional)
-   - Create a `known_faces` directory structure:
-     ```
-     known_faces/
-     ├── person1/
-     │   ├── photo1.jpg
-     │   └── photo2.jpg
-     └── person2/
-         ├── photo1.jpg
-         └── photo2.jpg
-     ```
+Key dependencies:
+- `fastapi>=0.68.0` - Modern web framework
+- `uvicorn>=0.15.0` - ASGI server
+- `opencv-python>=4.5.0` - Computer vision
+- `ultralytics>=8.0.0` - YOLO models
+- `face-recognition>=1.3.0` - Face recognition
+- `numpy>=1.21.0` - Numerical computing
+- `torch>=1.9.0` - Deep learning framework
 
 ## ⚙️ Configuration
 
-Edit `config.py` to customize the system:
-
-### Camera Settings
-```python
-CAMERA_SOURCES = [
-    "rtsp://username:password@camera_ip:554/stream_path",
-    0,  # USB camera
-    "path/to/video/file.mp4"
+### Camera Configuration (`cameras.json`)
+```json
+[
+  {
+    "id": "cam1",
+    "name": "Front Door",
+    "url": "rtsp://admin:password@192.168.1.100:554/stream"
+  },
+  {
+    "id": "cam2", 
+    "name": "Back Yard",
+    "url": "rtsp://admin:password@192.168.1.101:554/stream"
+  }
 ]
-FRAME_WIDTH = 1280
-FRAME_HEIGHT = 720
-FPS_LIMIT = 10
 ```
 
-### AI Model Settings
-```python
-OBJECT_DETECTION_MODEL_PATH = 'yolov8s.pt'
-OBJECT_CONFIDENCE_THRESHOLD = 0.45
-FOCUSED_OBJECT_CLASSES = ['person', 'car', 'bicycle', 'motorcycle']
+### System Configuration (`config.py`)
+- **Storage Settings**: Recordings and logs directory
+- **Remote GPU Settings**: Distributed processing configuration
+- **AI Models**: Object detection and face recognition models
+- **Recording Settings**: Duration, quality, and triggers
+- **Motion Detection**: Sensitivity and parameters
 
-FACE_DETECTION_MODEL = "hog"  # or "cnn" for better accuracy
-FACE_RECOGNITION_TOLERANCE = 0.55
-```
+## 🚀 Running the API Server (Phase 1)
 
-### Recording Settings
-```python
-RECORDINGS_DIR = "/path/to/recordings"
-RECORD_SECONDS_BEFORE_EVENT = 5
-RECORD_SECONDS_AFTER_EVENT = 10
-MAX_RECORDING_MINUTES = 5
-```
-
-### Motion Detection
-```python
-MOTION_VAR_THRESHOLD = 60  # Higher = less sensitive
-MOTION_MIN_CONTOUR_AREA = 700
-MOTION_COOLDOWN_SECONDS = 5
-```
-
-## 🚀 Usage
-
-### Basic Usage
+### Development Mode
 ```bash
+python api_server.py
+```
+
+### Production Mode
+```bash
+uvicorn api_server:app --host 0.0.0.0 --port 8082 --reload
+```
+
+### Background Service Mode
+```bash
+# The main controller can run independently
 python main_controller.py
-```
-
-### Testing Individual Modules
-Each module can be tested independently:
-
-```bash
-# Test camera connection
-python camera_manager.py
-
-# Test motion detection
-python motion_detector.py
-
-# Test object detection
-python object_detector.py
-
-# Test face recognition
-python face_recognizer.py
-
-# Test video recording
-python video_recorder.py
-```
-
-### Display Options
-- Set `SHOW_VIDEO_WINDOW = True` in config to see live video feeds
-- Press 'q' in any video window to quit
-- For headless operation, set `SHOW_VIDEO_WINDOW = False`
-
-## 📁 Directory Structure
-
-```
-Home_CCTV_AI/
-├── main_controller.py      # Main application entry point
-├── camera_manager.py       # Camera handling and connections
-├── motion_detector.py      # Motion detection algorithms
-├── object_detector.py      # YOLO object detection
-├── face_recognizer.py      # Face recognition system
-├── video_recorder.py       # Video recording with threading
-├── config.py              # Configuration settings
-├── README.md              # This file
-├── .gitignore
-└── mnt/f/AI_Models/       # AI model storage
-    └── yolov8s.pt
 ```
 
 ## 🔧 Advanced Configuration
 
 ### GPU Acceleration
-The system automatically detects and uses CUDA if available. To force CPU usage:
+The system automatically detects and uses CUDA if available:
 ```python
-# In object_detector.py, modify the _load_model method
-self.device = 'cpu'
+# In config.py
+REMOTE_GPU_ENABLED = True
+REMOTE_GPU_SERVER_URL = "http://192.168.29.78:5000"
+FALLBACK_TO_CPU = False
 ```
 
 ### Custom Object Classes
-Modify `FOCUSED_OBJECT_CLASSES` in config.py to focus on specific objects:
+Focus detection on specific objects:
 ```python
-FOCUSED_OBJECT_CLASSES = ['person', 'car', 'truck', 'bus', 'bicycle', 'dog', 'cat']
+FOCUSED_OBJECT_CLASSES = ['person', 'car', 'truck', 'bicycle', 'dog', 'cat']
 ```
 
 ### Recording Optimization
-- Adjust `AI_PROCESSING_FRAME_INTERVAL` to process every Nth frame
-- Set appropriate `FPS_LIMIT` based on your hardware capabilities
-- Configure `MAX_RECORDING_MINUTES` to prevent excessive file sizes
+- `AI_PROCESSING_FRAME_INTERVAL`: Process every Nth frame
+- `FPS_LIMIT`: Hardware-appropriate frame rate
+- `MAX_RECORDING_MINUTES`: Prevent excessive file sizes
 
 ## 🐛 Troubleshooting
 
@@ -192,73 +173,49 @@ FOCUSED_OBJECT_CLASSES = ['person', 'car', 'truck', 'bus', 'bicycle', 'dog', 'ca
 
 1. **Camera Connection Issues**
    - Verify RTSP URL format and credentials
-   - Ensure camera supports the specified stream format
    - Check network connectivity and firewall settings
 
-2. **CUDA/GPU Issues**
+2. **CUDA/GPU Issues** 
    - Install CUDA toolkit and compatible PyTorch version
-   - Verify GPU drivers are up to date
-   - System will fall back to CPU if CUDA is unavailable
+   - System falls back to CPU if CUDA unavailable
 
-3. **Face Recognition Performance**
-   - Use "hog" model for faster processing on CPU
-   - Use "cnn" model for better accuracy with GPU
-   - Ensure good quality, well-lit face images for enrollment
-
-4. **Video Recording Issues**
-   - Check disk space and write permissions
-   - Verify output directory exists and is writable
-   - Monitor system resources during recording
+3. **API Server Issues**
+   - Check port 8082 availability
+   - Verify FastAPI and uvicorn installation
+   - Review logs for startup errors
 
 ### Logging
-Check the log files for detailed error information:
-- Log level can be adjusted in `config.py` (DEBUG, INFO, WARNING, ERROR)
-- Logs include timestamps, module names, and detailed error messages
+- Log level configurable in `config.py`
+- Detailed timestamps and error messages
+- Separate logs for API server and core processing
 
-## 🤝 Contributing
+## 📞 Integration Status
 
-Contributions are welcome! Please follow these steps:
+This API server is ready for **Phase 2 integration** with the Luks_storage Rust backend. The API provides all necessary endpoints for:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Camera management and configuration
+- Live video streaming via MJPEG
+- Recording access and playback
+- System status and health monitoring
+- Real-time AI processing results
 
-### Development Guidelines
-- Follow Python PEP 8 style guidelines
-- Add appropriate error handling and logging
-- Update documentation for new features
-- Test modules independently before integration
+## 🔮 Next Steps (Phase 2)
 
-## 📄 License
+1. **Rust Backend Integration**
+   - Add process management for Python API server
+   - Implement HTTP client for API communication
+   - Create secure proxy endpoints
+   - Add authentication and authorization
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Ultralytics](https://ultralytics.com/) for the YOLO implementation
-- [face_recognition](https://github.com/ageitgey/face_recognition) library by Adam Geitgey
-- OpenCV community for computer vision tools
-- PyTorch team for the deep learning framework
-
-## 📞 Support
-
-For support, questions, or feature requests:
-- Open an issue on GitHub
-- Check the troubleshooting section above
-- Review the configuration documentation
-
-## 🔮 Future Enhancements
-
-- [ ] Web-based dashboard for remote monitoring
-- [ ] Mobile app integration
-- [ ] Cloud storage integration
-- [ ] Advanced analytics and reporting
-- [ ] Multiple AI model support
-- [ ] Real-time alerts and notifications
-- [ ] Integration with home automation systems
+2. **Advanced Features**
+   - WebSocket support for real-time updates
+   - Advanced analytics and reporting
+   - Mobile app integration
+   - Cloud storage integration
 
 ---
 
-**Note**: This system is designed for legitimate surveillance purposes only. Please ensure compliance with local privacy laws and regulations when deploying CCTV systems.
+**Phase 1 Status**: ✅ **COMPLETE** - Ready for Rust backend integration
+**Current Branch**: `phase-1-api-complete`
+**Next Phase**: Integration with Luks_storage Rust backend
+
